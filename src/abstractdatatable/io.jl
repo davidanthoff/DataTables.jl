@@ -235,9 +235,9 @@ allocate{S,R}(::Type{CategoricalVector{S,R}}, rows, ref) =
     CategoricalArray{S,1,R}(rows)
 
 allocate{S,R}(::Type{Nullable{CategoricalArrays.CategoricalValue{S,R}}}, rows, ref) =
-    NullableCategoricalArray{S,1,R}(rows)
+    DataValueCategoricalArray{S,1,R}(rows)
 allocate{S,R}(::Type{NullableCategoricalVector{S,R}}, rows, ref) =
-    NullableCategoricalArray{S,1,R}(rows)
+    DataValueCategoricalArray{S,1,R}(rows)
 
 function DataTable{T <: Data.StreamType}(sch::Data.Schema,
                                          ::Type{T}=Data.Field,

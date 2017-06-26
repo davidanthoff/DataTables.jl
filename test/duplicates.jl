@@ -9,12 +9,12 @@ module TestDuplicates
     unique!(dt)
     @test isequal(dt, udt)
 
-    pdt = DataTable(a = NullableCategoricalArray(Nullable{String}["a", "a", Nullable(),
-                                             Nullable(), "b", Nullable(), "a", Nullable()]),
-                    b = NullableCategoricalArray(Nullable{String}["a", "b", Nullable(),
-                                                              Nullable(), "b", "a", "a", "a"]))
-    updt = DataTable(a = NullableCategoricalArray(Nullable{String}["a", "a", Nullable(), "b", Nullable()]),
-                     b = NullableCategoricalArray(Nullable{String}["a", "b", Nullable(), "b", "a"]))
+    pdt = DataTable(a = DataValueCategoricalArray(DataValue{String}["a", "a", NA,
+                                             NA, "b", NA, "a", NA]),
+                    b = DataValueCategoricalArray(DataValue{String}["a", "b", NA,
+                                                              NA, "b", "a", "a", "a"]))
+    updt = DataTable(a = DataValueCategoricalArray(DataValue{String}["a", "a", NA, "b", NA]),
+                     b = DataValueCategoricalArray(DataValue{String}["a", "b", NA, "b", "a"]))
     @test isequal(nonunique(pdt), [false, false, false, true, false, false, true, true])
     @test isequal(nonunique(updt), falses(5) )
     @test isequal(updt, unique(pdt))

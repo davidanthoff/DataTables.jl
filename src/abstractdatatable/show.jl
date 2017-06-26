@@ -66,7 +66,7 @@ ourshowcompact(io::IO, x::AbstractString) = print(io, x) # -> Void
 ourshowcompact(io::IO, x::Symbol) = print(io, x) # -> Void
 ourshowcompact{T<:AbstractString}(io::IO, x::CategoricalValue{T}) =
     print(io, String(x)) # -> Void
-ourshowcompact(io::IO, x::Nullable) =
+ourshowcompact(io::IO, x::DataValue) =
     isnull(x) ? showcompact(io, x) : ourshowcompact(io, unsafe_get(x)) # -> Void
 
 #' @description

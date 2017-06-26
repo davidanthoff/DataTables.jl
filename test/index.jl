@@ -16,11 +16,11 @@ inds = Any[1,
            1:1,
            1.0:1.0,
            [:A],
-           NullableArray([true]),
-           NullableArray([1]),
-           NullableArray([1.0]),
-           NullableArray([:A]),
-           NullableArray([:A])]
+           DataValueArray([true]),
+           DataValueArray([1]),
+           DataValueArray([1.0]),
+           DataValueArray([:A]),
+           DataValueArray([:A])]
 
 for ind in inds
     if isequal(ind, :A) || ndims(ind) == 0

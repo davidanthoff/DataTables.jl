@@ -12,8 +12,7 @@ using Compat
 import Compat.String
 using Reexport
 using StatsBase
-import NullableArrays: dropnull, dropnull!
-@reexport using NullableArrays
+@reexport using DataValues
 @reexport using CategoricalArrays
 using SortingAlgorithms
 using Base: Sort, Order
@@ -103,7 +102,7 @@ for (dir, filename) in [
         ("abstractdatatable", "join.jl"),
         ("abstractdatatable", "reshape.jl"),
 
-        ("abstractdatatable", "io.jl"),
+        # ("abstractdatatable", "io.jl"),
 
         ("abstractdatatable", "show.jl"),
         ("groupeddatatable", "show.jl"),

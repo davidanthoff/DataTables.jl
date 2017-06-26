@@ -41,18 +41,18 @@ module TestUtils
 
     @test DataTables.countnull([1:3;]) == 0
 
-    data = NullableArray(rand(20))
+    data = DataValueArray(rand(20))
     @test DataTables.countnull(data) == 0
-    data[sample(1:20, 11, replace=false)] = Nullable()
+    data[sample(1:20, 11, replace=false)] = NA
     @test DataTables.countnull(data) == 11
-    data[1:end] = Nullable()
+    data[1:end] = NA
     @test DataTables.countnull(data) == 20
 
-    pdata = NullableArray(sample(1:5, 20))
+    pdata = DataValueArray(sample(1:5, 20))
     @test DataTables.countnull(pdata) == 0
-    pdata[sample(1:20, 11, replace=false)] = Nullable()
+    pdata[sample(1:20, 11, replace=false)] = NA
     @test DataTables.countnull(pdata) == 11
-    pdata[1:end] = Nullable()
+    pdata[1:end] = NA
     @test DataTables.countnull(pdata) == 20
 
     funs = [mean, sum, var, x -> sum(x)]
@@ -64,9 +64,9 @@ module TestUtils
 
     @testset "describe" begin
         io = IOBuffer()
-        dt = DataTable(Any[collect(1:4), NullableArray(2:5),
+        dt = DataTable(Any[collect(1:4), DataValueArray(2:5),
                            CategoricalArray(3:6),
-                           NullableCategoricalArray(4:7)],
+                           DataValueCategoricalArray(4:7)],
                        [:arr, :nullarr, :cat, :nullcat])
         describe(io, dt)
         @test String(take!(io)) ==
@@ -104,7 +104,7 @@ module TestUtils
             nullcat
             Summary Stats:
             Length:         4
-            Type:           Nullable{CategoricalArrays.CategoricalValue{$Int,$(CategoricalArrays.DefaultRefType)}}
+            Type:           DataValue{CategoricalArrays.CategoricalValue{$Int,$(CategoricalArrays.DefaultRefType)}}
             Number Unique:  4
             Number Missing: 0
             % Missing:      0.000000

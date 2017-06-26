@@ -38,8 +38,8 @@ module TestShow
     show(io, A)
 
     #Test show output for REPL and similar
-    dt = DataTable(Fish = ["Suzy", "Amir"], Mass = [1.5, Nullable()],
-                   E = NullableCategoricalArray(["a", Nullable()]))
+    dt = DataTable(Fish = ["Suzy", "Amir"], Mass = [1.5, NA],
+                   E = DataValueCategoricalArray(["a", NA]))
     io = IOBuffer()
     show(io, dt)
     str = String(take!(io))

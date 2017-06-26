@@ -24,7 +24,6 @@ The following are normally implemented for AbstractDataTables:
 * [`head`](@ref) : first `n` rows
 * [`tail`](@ref) : last `n` rows
 * `convert` : convert to an array
-* `NullableArray` : convert to a NullableArray
 * [`completecases`](@ref) : boolean vector of complete cases (rows with no nulls)
 * [`dropnull`](@ref) : remove rows with null values
 * [`dropnull!`](@ref) : remove rows with null values in-place
@@ -391,13 +390,13 @@ function _nonnull!(res, col)
     end
 end
 
-function _nonnull!(res, col::NullableArray)
+function _nonnull!(res, col::DataValueArray)
     for (i, el) in enumerate(col.isnull)
         res[i] &= !el
     end
 end
 
-function _nonnull!(res, col::NullableCategoricalArray)
+function _nonnull!(res, col::DataValueCategoricalArray)
     for (i, el) in enumerate(col.refs)
         res[i] &= el > 0
     end
@@ -425,8 +424,8 @@ See also [`dropnull`](@ref) and [`dropnull!`](@ref).
 
 ```julia
 dt = DataTable(i = 1:10, x = rand(10), y = rand(["a", "b", "c"], 10))
-dt[[1,4,5], :x] = Nullable()
-dt[[9,10], :y] = Nullable()
+dt[[1,4,5], :x] = NA
+dt[[9,10], :y] = NA
 completecases(dt)
 ```
 
@@ -460,8 +459,8 @@ See also [`completecases`](@ref) and [`dropnull!`](@ref).
 
 ```julia
 dt = DataTable(i = 1:10, x = rand(10), y = rand(["a", "b", "c"], 10))
-dt[[1,4,5], :x] = Nullable()
-dt[[9,10], :y] = Nullable()
+dt[[1,4,5], :x] = NA
+dt[[9,10], :y] = NA
 dropnull(dt)
 ```
 
@@ -489,8 +488,8 @@ See also [`dropnull`](@ref) and [`completecases`](@ref).
 
 ```julia
 dt = DataTable(i = 1:10, x = rand(10), y = rand(["a", "b", "c"], 10))
-dt[[1,4,5], :x] = Nullable()
-dt[[9,10], :y] = Nullable()
+dt[[1,4,5], :x] = NA
+dt[[9,10], :y] = NA
 dropnull!(dt)
 ```
 
@@ -502,7 +501,7 @@ function Base.convert(::Type{Array}, dt::AbstractDataTable)
 end
 function Base.convert(::Type{Matrix}, dt::AbstractDataTable)
     T = reduce(promote_type, eltypes(dt))
-    T <: Nullable && (T = eltype(T))
+    T <: DataValue && (T = eltype(T))
     convert(Matrix{T}, dt)
 end
 function Base.convert{T}(::Type{Array{T}}, dt::AbstractDataTable)
@@ -520,20 +519,20 @@ function Base.convert{T}(::Type{Matrix{T}}, dt::AbstractDataTable)
     return res
 end
 
-function Base.convert(::Type{NullableArray}, dt::AbstractDataTable)
-    convert(NullableMatrix, dt)
+function Base.convert(::Type{DataValueArray}, dt::AbstractDataTable)
+    convert(DataValueMatrix, dt)
 end
-function Base.convert(::Type{NullableMatrix}, dt::AbstractDataTable)
+function Base.convert(::Type{DataValueMatrix}, dt::AbstractDataTable)
     T = reduce(promote_type, eltypes(dt))
-    T <: Nullable && (T = eltype(T))
-    convert(NullableMatrix{T}, dt)
+    T <: DataValue && (T = eltype(T))
+    convert(DataValueMatrix{T}, dt)
 end
-function Base.convert{T}(::Type{NullableArray{T}}, dt::AbstractDataTable)
-    convert(NullableMatrix{T}, dt)
+function Base.convert{T}(::Type{DataValueArray{T}}, dt::AbstractDataTable)
+    convert(DataValueMatrix{T}, dt)
 end
-function Base.convert{T}(::Type{NullableMatrix{T}}, dt::AbstractDataTable)
+function Base.convert{T}(::Type{DataValueMatrix{T}}, dt::AbstractDataTable)
     n, p = size(dt)
-    res = NullableArray(T, n, p)
+    res = DataValueArray(T, n, p)
     idx = 1
     for col in columns(dt)
         copy!(res, idx, col)
@@ -658,7 +657,7 @@ without(dt::AbstractDataTable, c::Any) = without(dt, index(dt)[c])
 ##############################################################################
 
 # hcat's first argument must be an AbstractDataTable
-# Trailing arguments (currently) may also be NullableVectors, Vectors, or scalars.
+# Trailing arguments (currently) may also be DataValueVectors, Vectors, or scalars.
 
 # hcat! is defined in datatables/datatables.jl
 # Its first argument (currently) must be a DataTable.
@@ -672,20 +671,20 @@ Base.hcat(dt1::AbstractDataTable, dt2::AbstractDataTable, dtn::AbstractDataTable
 
 @generated function promote_col_type(cols::AbstractVector...)
     elty = Base.promote_eltype(cols...)
-    if elty <: Nullable
+    if elty <: DataValue
         elty = eltype(elty)
     end
     if elty <: CategoricalValue
         elty = elty.parameters[1]
     end
-    if any(col -> eltype(col) <: Nullable, cols)
-        if any(col -> col <: Union{AbstractCategoricalArray, AbstractNullableCategoricalArray}, cols)
-            return :(NullableCategoricalVector{$elty})
+    if any(col -> eltype(col) <: DataValue, cols)
+        if any(col -> col <: Union{AbstractCategoricalArray, AbstractDataValueCategoricalArray}, cols)
+            return :(DataValueCategoricalVector{$elty})
         else
-            return :(NullableVector{$elty})
+            return :(DataValueVector{$elty})
         end
     else
-        if any(col -> col <: Union{AbstractCategoricalArray, AbstractNullableCategoricalArray}, cols)
+        if any(col -> col <: Union{AbstractCategoricalArray, AbstractDataValueCategoricalArray}, cols)
             return :(CategoricalVector{$elty})
         else
             return :(Vector{$elty})

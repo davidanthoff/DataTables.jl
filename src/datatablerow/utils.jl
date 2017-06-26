@@ -30,11 +30,11 @@ function hashrows_col!(h::Vector{UInt}, v::AbstractVector)
 end
 
 if !isdefined(Base, :unsafe_get)
-    unsafe_get(x::Nullable) = x.value
+    unsafe_get(x::DataValue) = x.value
     unsafe_get(x::Any) = x
 end
 
-function hashrows_col!{T<:Nullable}(h::Vector{UInt}, v::AbstractVector{T})
+function hashrows_col!{T<:DataValue}(h::Vector{UInt}, v::AbstractVector{T})
     @inbounds for i in eachindex(h)
         h[i] = isnull(v[i]) ?
                h[i] + Base.nullablehash_seed :
@@ -52,9 +52,9 @@ function hashrows_col!{T}(h::Vector{UInt}, v::AbstractCategoricalVector{T})
     h
 end
 
-# should give the same hash as AbstractNullableVector{T}
+# should give the same hash as AbstractDataValueVector{T}
 # enables efficient sequential memory access pattern
-function hashrows_col!{T}(h::Vector{UInt}, v::AbstractNullableCategoricalVector{T})
+function hashrows_col!{T}(h::Vector{UInt}, v::AbstractDataValueCategoricalVector{T})
     # TODO is it possible to optimize by hashing the pool values once?
     @inbounds for (i, ref) in enumerate(v.refs)
         h[i] = ref == 0 ?

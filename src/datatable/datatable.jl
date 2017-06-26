@@ -2,7 +2,7 @@
 An AbstractDataTable that stores a set of named columns
 
 The columns are normally AbstractVectors stored in memory,
-particularly a Vector, NullableVector, or CategoricalVector.
+particularly a Vector, DataValueVector, or CategoricalVector.
 
 **Constructors**
 
@@ -30,10 +30,6 @@ Each column in `columns` should be the same length.
 
 **Notes**
 
-Most of the default constructors convert columns to `NullableArray`.  The
-base constructor, `DataTable(columns::Vector{Any},
-names::Vector{Symbol})` does not convert to `NullableArray`.
-
 A `DataTable` is a lightweight object. As long as columns are not
 manipulated, creation of a DataTable from existing AbstractVectors is
 inexpensive. For example, indexing on columns is inexpensive, but
@@ -49,7 +45,7 @@ loops.
 dt = DataTable()
 v = ["x","y","z"][rand(1:3, 10)]
 dt1 = DataTable(Any[collect(1:10), v, rand(10)], [:A, :B, :C])  # columns are Arrays
-dt2 = DataTable(A = 1:10, B = v, C = rand(10))           # columns are NullableArrays
+dt2 = DataTable(A = 1:10, B = v, C = rand(10))
 dump(dt1)
 dump(dt2)
 describe(dt2)
@@ -126,11 +122,11 @@ function DataTable{T<:Type}(column_eltypes::AbstractVector{T}, cnames::AbstractV
     columns = Vector{Any}(numcols)
     for j in 1:numcols
         elty = column_eltypes[j]
-        if elty <: Nullable
+        if elty <: DataValue
             if eltype(elty) <: CategoricalValue
-                columns[j] = NullableCategoricalArray{eltype(elty)}(nrows)
+                columns[j] = DataValueCategoricalArray{eltype(elty)}(nrows)
             else
-                columns[j] = NullableVector{eltype(elty)}(nrows)
+                columns[j] = DataValueVector{eltype(elty)}(nrows)
             end
         else
             if elty <: CategoricalValue
@@ -151,8 +147,8 @@ function DataTable{T<:Type}(column_eltypes::AbstractVector{T}, cnames::AbstractV
     updated_types = convert(Vector{Type}, column_eltypes)
     for i in eachindex(nominal)
         nominal[i] || continue
-        if updated_types[i] <: Nullable
-            updated_types[i] = Nullable{CategoricalValue{eltype(updated_types[i])}}
+        if updated_types[i] <: DataValue
+            updated_types[i] = DataValue{CategoricalValue{eltype(updated_types[i])}}
         else
             updated_types[i] = CategoricalValue{updated_types[i]}
         end
@@ -216,7 +212,7 @@ end
 # dt[MultiColumnIndex] => DataTable
 function Base.getindex{T <: ColumnIndex}(dt::DataTable,
                                          col_inds::Union{AbstractVector{T},
-                                                         AbstractVector{Nullable{T}}})
+                                                         AbstractVector{DataValue{T}}})
     selected_columns = index(dt)[col_inds]
     new_columns = dt.columns[selected_columns]
     return DataTable(new_columns, Index(_names(dt)[selected_columns]))
@@ -235,7 +231,7 @@ end
 function Base.getindex{T <: ColumnIndex}(dt::DataTable,
                                          row_ind::Real,
                                          col_inds::Union{AbstractVector{T},
-                                                         AbstractVector{Nullable{T}}})
+                                                         AbstractVector{DataValue{T}}})
     selected_columns = index(dt)[col_inds]
     new_columns = Any[dv[[row_ind]] for dv in dt.columns[selected_columns]]
     return DataTable(new_columns, Index(_names(dt)[selected_columns]))
@@ -243,7 +239,7 @@ end
 
 # dt[MultiRowIndex, SingleColumnIndex] => AbstractVector
 function Base.getindex{T <: Real}(dt::DataTable,
-                                  row_inds::Union{AbstractVector{T}, AbstractVector{Nullable{T}}},
+                                  row_inds::Union{AbstractVector{T}, AbstractVector{DataValue{T}}},
                                   col_ind::ColumnIndex)
     selected_column = index(dt)[col_ind]
     return dt.columns[selected_column][row_inds]
@@ -252,9 +248,9 @@ end
 # dt[MultiRowIndex, MultiColumnIndex] => DataTable
 function Base.getindex{R <: Real, T <: ColumnIndex}(dt::DataTable,
                                                     row_inds::Union{AbstractVector{R},
-                                                                    AbstractVector{Nullable{R}}},
+                                                                    AbstractVector{DataValue{R}}},
                                                     col_inds::Union{AbstractVector{T},
-                                                                    AbstractVector{Nullable{T}}})
+                                                                    AbstractVector{DataValue{T}}})
     selected_columns = index(dt)[col_inds]
     new_columns = Any[dv[row_inds] for dv in dt.columns[selected_columns]]
     return DataTable(new_columns, Index(_names(dt)[selected_columns]))
@@ -265,7 +261,7 @@ end
 Base.getindex{T<:ColumnIndex}(dt::DataTable,
                               row_inds::Colon,
                               col_inds::Union{T, AbstractVector{T},
-                                              AbstractVector{Nullable{T}}}) =
+                                              AbstractVector{DataValue{T}}}) =
     dt[col_inds]
 
 # dt[SingleRowIndex, :] => DataTable
@@ -274,7 +270,7 @@ Base.getindex(dt::DataTable, row_ind::Real, col_inds::Colon) = dt[[row_ind], col
 # dt[MultiRowIndex, :] => DataTable
 function Base.getindex{R<:Real}(dt::DataTable,
                                 row_inds::Union{AbstractVector{R},
-                                                AbstractVector{Nullable{R}}},
+                                                AbstractVector{DataValue{R}}},
                                 col_inds::Colon)
     new_columns = Any[dv[row_inds] for dv in dt.columns]
     return DataTable(new_columns, copy(index(dt)))
@@ -622,7 +618,7 @@ function Base.insert!(dt::DataTable, col_ind::Int, item::AbstractVector, name::S
 end
 
 # FIXME: Needed to work around a crash: JuliaLang/julia#18299
-function Base.insert!(dt::DataTable, col_ind::Int, item::NullableArray, name::Symbol)
+function Base.insert!(dt::DataTable, col_ind::Int, item::DataValueArray, name::Symbol)
     0 < col_ind <= ncol(dt) + 1 || throw(BoundsError())
     size(dt, 1) == length(item) || size(dt, 1) == 0 || error("number of rows does not match")
 
@@ -749,7 +745,7 @@ Base.hcat(dt1::DataTable, dt2::AbstractDataTable, dtn::AbstractDataTable...) = h
 ##############################################################################
 
 function nullable!(dt::DataTable, col::ColumnIndex)
-    dt[col] = NullableArray(dt[col])
+    dt[col] = DataValueArray(dt[col])
     dt
 end
 function nullable!{T <: ColumnIndex}(dt::DataTable, cols::Vector{T})

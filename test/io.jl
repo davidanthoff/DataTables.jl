@@ -2,15 +2,14 @@ module TestIO
     using Base.Test
     using DataTables
     using LaTeXStrings
-    using NullableArrays
     using CategoricalArrays
 
     # Test LaTeX export
     dt = DataTable(A = 1:4,
                    B = ["\$10.0", "M&F", "A~B", "\\alpha"],
                    C = [L"\alpha", L"\beta", L"\gamma", L"\sum_{i=1}^n \delta_i"],
-                   D = [1.0, 2.0, Nullable(), 3.0],
-                   E = NullableCategoricalArray(["a", Nullable(), "c", "d"])
+                   D = [1.0, 2.0, NA, 3.0],
+                   E = DataValueCategoricalArray(["a", NA, "c", "d"])
                    )
     str = """
         \\begin{tabular}{r|ccccc}
@@ -25,8 +24,8 @@ module TestIO
     @test reprmime(MIME("text/latex"), dt) == str
 
     #Test HTML output for IJulia and similar
-    dt = DataTable(Fish = ["Suzy", "Amir"], Mass = [1.5, Nullable()],
-                   E = NullableCategoricalArray(["a", Nullable()]))
+    dt = DataTable(Fish = ["Suzy", "Amir"], Mass = [1.5, NA],
+                   E = DataValueCategoricalArray(["a", NA]))
     io = IOBuffer()
     show(io, "text/html", dt)
     str = String(take!(io))
@@ -50,10 +49,10 @@ module TestIO
                    B = 'a':'c',
                    C = ["A", "B", "C"],
                    D = CategoricalArray('a':'c'),
-                   E = NullableCategoricalArray(["A", "B", "C"]),
-                   F = NullableArray(1:3),
-                   G = NullableArray(fill(Nullable(), 3)),
-                   H = fill(Nullable(), 3))
+                   E = DataValueCategoricalArray(["A", "B", "C"]),
+                   F = DataValueArray(1:3),
+                   G = DataValueArray(fill(NA, 3)),
+                   H = fill(NA, 3))
 
     @test sprint(printtable, dt) == """
         \"A\",\"B\",\"C\",\"D\",\"E\",\"F\",\"G\",\"H\"

@@ -240,8 +240,8 @@ colwise(sum, groupby(dt, :a))
 """
 function colwise(f, d::AbstractDataTable)
     x = [f(d[i]) for i in 1:ncol(d)]
-    if eltype(x) <: Nullable
-        return NullableArray(x)
+    if eltype(x) <: DataValue
+        return DataValueArray(x)
     else
         return x
     end
@@ -249,8 +249,8 @@ end
 # apply several functions to each column in a DataTable
 function colwise(fns::Union{AbstractVector, Tuple}, d::AbstractDataTable)
     x = [f(d[i]) for f in fns, i in 1:ncol(d)]
-    if eltype(x) <: Nullable
-        return NullableArray(x)
+    if eltype(x) <: DataValue
+        return DataValueArray(x)
     else
         return x
     end
