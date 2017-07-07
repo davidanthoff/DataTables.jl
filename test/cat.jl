@@ -111,7 +111,7 @@ module TestCat
     @test isequal(dtr, [dt4; dt4])
 
     @test eltypes(vcat(DataTable(a = [1]), DataTable(a = [2.1]))) == Type[Float64]
-    @test eltypes(vcat(DataTable(a = DataValueArray(Int, 1)), DataTable(a = [2.1]))) == Type[DataValue{Float64}]
+    @test eltypes(vcat(DataTable(a = DataValueArray{Int}(1)), DataTable(a = [2.1]))) == Type[DataValue{Float64}]
 
     # Minimal container type promotion
     dta = DataTable(a = DataValueCategoricalArray([1, 2, 2]))

@@ -10,7 +10,7 @@ module TestData
     nvint3 = DataValueArray(5:8)
     nvflt = DataValueArray(DataValue{Float64}[1.0, 2.0, NA, 4.0])
     nvstr = DataValueArray(DataValue{Compat.ASCIIString}["one", "two", NA, "four"])
-    dvdict = DataValueArray(Dict, 4)    # for issue #199
+    dvdict = DataValueArray{Dict}(4)    # for issue #199
 
     #test_group("constructors")
     dt1 = DataTable(Any[nvint, nvstr], [:Ints, :Strs])
